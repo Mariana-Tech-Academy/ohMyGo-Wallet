@@ -3,12 +3,16 @@ package routes
 import (
 	"vaqua/handler"
 	"vaqua/middleware"
+
 	"github.com/gin-gonic/gin"
+
 	"gorm.io/gorm"
 )
 
 func SetupRouter(userHandler *handler.UserHandler, transferRequestHandler *handler.TransferRequestHandler, transactionHandler *handler.TransactionHandler, db *gorm.DB) *gin.Engine {
 	r := gin.Default()
+
+	auth := r.Group("/")
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -27,13 +31,22 @@ func SetupRouter(userHandler *handler.UserHandler, transferRequestHandler *handl
 	})
 
 	// public routes
-	r.POST("/signup", userHandler.SignupUser)
+	r.POST("/signup", userHandler.SignUpNewUserAcct)
 	r.POST("/login", userHandler.LoginUser)
+	// r.GET("/user/:id", userHandler.GetUserByID)
+	// r.GET("/user", userHandler.GetUserByEmail)
+
 
 
 	//  Authenticated user routes
-	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
+	{
+		auth.PATCH("/profile", userHandler.UpdateUserProfile)
+		auth.GET("/user/id/me", userHandler.GetUserByID)
+		auth.GET("/user/email/me", userHandler.GetUserByEmail)
+	}
+
+	r.POST("/logout", userHandler.LogoutUser)
 
 	auth.GET("/dashboard/expenses", transactionHandler.GetExpensesHandler)
 	auth.GET("/transactions/:id", transactionHandler.GetTransactionByIDHandler)

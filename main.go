@@ -10,6 +10,9 @@ import (
 	"vaqua/repository"
 	"vaqua/routes"
 	"vaqua/services"
+
+	"log"
+	"vaqua/redis"
 )
 
 func main() {
@@ -20,10 +23,17 @@ func main() {
 	db := db.InitDb()
 	db.AutoMigrate(&models.User{})
 
+    // connect to Redis
+	if err := redis.ConnectRedis(); err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+
+	fmt.Println("Connected to Redis successfully!")
+	
 	// initialise the repo
-	userRepo := &repository.UserRepo{DB: db}
-	transferRequestRepo := &repository.TransferRequestRepo{DB: db}
-	transactionRepo := &repository.TransactionRepo{DB: db}
+	userRepo := &repository.UserRepo{}
+	transferRequestRepo := &repository.TransferRequestRepo{}
+	transactionRepo := &repository.TransactionRepo{}
 	// initialise the service
 	userService := &services.UserService{Repo: userRepo}
 	transferRequestService := &services.TransferRequestService{Repo: transferRequestRepo}
