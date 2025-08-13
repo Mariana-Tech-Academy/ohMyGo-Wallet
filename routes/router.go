@@ -2,9 +2,8 @@ package routes
 
 import (
 	"vaqua/handler"
-
+	"vaqua/middleware"
 	"github.com/gin-gonic/gin"
-	
 	"gorm.io/gorm"
 )
 
@@ -29,10 +28,15 @@ func SetupRouter(userHandler *handler.UserHandler, transferRequestHandler *handl
 
 	// public routes
 	r.POST("/signup", userHandler.SignupUser)
+	r.POST("/login", userHandler.LoginUser)
 
 
 	//  Authenticated user routes
+	auth := r.Group("/")
+	auth.Use(middleware.AuthMiddleware())
 
+	auth.GET("/dashboard/expenses", transactionHandler.GetExpensesHandler)
+	auth.GET("/transactions/:id", transactionHandler.GetTransactionByIDHandler)
 	return r
 
 }
