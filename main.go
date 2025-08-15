@@ -21,7 +21,10 @@ func main() {
 
 	// connect to database
 	db := db.InitDb()
-	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(
+		&models.User{},
+		&models.Transaction{},
+	)
 
     // connect to Redis
 	if err := redis.ConnectRedis(); err != nil {
