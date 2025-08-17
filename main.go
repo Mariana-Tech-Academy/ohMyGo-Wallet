@@ -12,7 +12,7 @@ import (
 	"log"
 	"vaqua/redis"
 )
-
+//THIS IS A TEST
 func main() {
 	// load up variables
 	config.LoadEnv()
