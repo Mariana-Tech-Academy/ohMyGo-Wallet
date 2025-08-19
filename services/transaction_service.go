@@ -1,29 +1,26 @@
 package services
 
-import ("vaqua/repository"
-		"vaqua/models"
-		"errors")
-
+import (
+	"vaqua/models"
+	"vaqua/repository"
+)
 
 type TransactionService struct {
 	Repo repository.TransactionRepository
 }
 
-func (s *TransactionService) GetTransactionByID(id uint, userID uint) (*models.Transaction, error) {
-	transaction, err := s.Repo.FindByID(id, userID)
-	if err != nil {
-		return nil, err
-	}
-	//redunduncy check needed?
-	if transaction.UserID != userID {
-		return nil, errors.New("unauthorized access")
-
-	}
-	return transaction, nil
+func (s *TransactionService) CreateTransaction(tx *models.Transaction) error {
+	return s.Repo.CreateTransaction(tx)
 }
 
-func (s *TransactionService) GetExpensesByUserAndPeriod(userID uint, period string) ([]models.Transaction, error) {
-	// TODO: Implement logic to retrieve expenses based on the period and UserID
-	return s.Repo.FindExpensesByUserAndPeriod(userID, period)
-}
 
+func (s *TransactionService) GetAllTransactions(userID uint, page, limit int) ([]models.Transaction, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+	return s.Repo.GetAllTransactionsByUser(userID, limit, offset)
+}
