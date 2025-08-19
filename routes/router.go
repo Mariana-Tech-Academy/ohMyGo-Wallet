@@ -10,45 +10,44 @@ import (
 
 func SetupRouter(
 	userHandler *handler.UserHandler,
-	transferRequestHandler *handler.TransferHandler,
+	transferHandler *handler.TransferHandler,
 	transactionHandler *handler.TransactionHandler,
 	db *gorm.DB,
 ) *gin.Engine {
 	r := gin.Default()
 
-	// Health check endpoint
+	// Health check
 	r.GET("/health", func(c *gin.Context) {
 		sqlDB, err := db.DB()
 		if err != nil {
 			c.JSON(500, gin.H{"status": "unhealthy", "error": err.Error()})
 			return
 		}
-
 		if err := sqlDB.Ping(); err != nil {
 			c.JSON(500, gin.H{"status": "unhealthy", "error": "cannot connect to database"})
 			return
 		}
-
 		c.JSON(200, gin.H{"status": "healthy", "db": "connected to database"})
 	})
 
-	// Public routes
+	// Public auth
 	r.POST("/signup", userHandler.SignUpNewUserAcct)
 	r.POST("/login", userHandler.LoginUser)
 
 	// Authenticated routes
-	authorized := r.Group("/")
-	authorized.Use(middleware.AuthMiddleware())
+	auth := r.Group("/")
+	auth.Use(middleware.AuthMiddleware())
 
-	authorized.POST("/logout", userHandler.LogoutUser)
-	authorized.POST("/transfer", transferRequestHandler.CreateTransfer)
-	authorized.PATCH("/profile", userHandler.UpdateUserProfile)
-	authorized.GET("/user/id/me", userHandler.GetUserByID)
-	authorized.GET("/user/email/me", userHandler.GetUserByEmail)
+	// User, profile and transfer
+	auth.POST("/logout", userHandler.LogoutUser)
+	auth.PATCH("/profile", userHandler.UpdateUserProfile)
+	auth.POST("/transfer", transferHandler.CreateTransfer)
+	auth.GET("/user/id/me", userHandler.GetUserByID)
+	auth.GET("/user/email/me", userHandler.GetUserByEmail)
 
-	// Transactions
-	authorized.POST("/transactions", transactionHandler.CreateTransaction)
-	authorized.GET("/transactions", transactionHandler.GetAllTransactions) 
+	// Transactions 
+	auth.POST("/transactions", transactionHandler.CreateTransaction)  // create
+	auth.GET("/transactions", transactionHandler.GetAllTransactions)  // list (paginated)
 
 	
 
