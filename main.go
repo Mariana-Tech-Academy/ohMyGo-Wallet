@@ -32,19 +32,19 @@ func main() {
 	}
 
 	fmt.Println("Connected to Redis successfully!")
-	
+
 	// initialise the repo
 	userRepo := &repository.UserRepo{}
-	transferRequestRepo := &repository.TransferRequestRepo{}
+	transferRequestRepo := &repository.TransferRepo{}
 	transactionRepo := &repository.TransactionRepo{}
 	// initialise the service
 	userService := &services.UserService{Repo: userRepo}
-	transferRequestService := &services.TransferRequestService{Repo: transferRequestRepo}
+	transferService := &services.TransferServices{Repo: *transferRequestRepo}
 	transactionService := &services.TransactionService{Repo: transactionRepo}
 
 	// initialise the handler
 	userHandler := &handler.UserHandler{Service: userService}
-	transferRequestHandler := &handler.TransferRequestHandler{Service: transferRequestService}
+	transferRequestHandler := &handler.TransferHandler{Service: transferService}
 	transactionHandler := &handler.TransactionHandler{Service: transactionService}
 
 	// setup routes

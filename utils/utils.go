@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,4 +34,11 @@ func GenerateRandomAccNum() uint64 {
 	max := uint64(9999999999)
 
 	return min + uint64(rand.Intn(int(max - min)))
+}
+
+//string needed for account number
+
+func GenerateRandomAccNumAsString() string {
+	num := GenerateRandomAccNum()
+	return fmt.Sprintf("%010d", num) // always 10 digits
 }

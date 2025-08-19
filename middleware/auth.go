@@ -112,6 +112,23 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+
+		//need to set user ID in context for further use E.G. transfer
+		 if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			userIDFloat, ok := claims["user_id"].(float64); 
+			if !ok {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token claims"})
+				c.Abort()
+				return
+			}
+			c.Set("user_id", uint(userIDFloat)) // Set user ID in context
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
+			c.Abort()
+			return
+		}
+		// Continue processing the request
+
 		// Continue processing the request
 		c.Set("user_id", uint(userIDFloat))
 		c.Set("email", email)
@@ -140,10 +157,10 @@ func GetUserIDFromToken(c *gin.Context) (uint, error) {
 		return 0, fmt.Errorf("could not parse claims")
 	}
 
-	userID, ok := claims["user_id"].(float64)
+	userIDFloat, ok := claims["user_id"].(float64)
 	if !ok {
 		return 0, fmt.Errorf("user id not found in claims")
 	}
 
-	return uint(userID), nil
+	return uint(userIDFloat), nil
 }
