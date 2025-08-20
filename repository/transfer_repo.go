@@ -21,11 +21,13 @@ type TransferRepository interface {
 
 }
 
-type TransferRepo struct{}
+type TransferRepo struct{
+	DB *gorm.DB
+}
 
 
 func NewTransferRepo() *TransferRepo {
-	return &TransferRepo{}
+	return &TransferRepo{DB : db.Db }
 }  // NewTransferRepo creates a new instance of TransferRepo which im using for when i do the create account for the user during signup
 
 func (r *TransferRepo) GetAccountByUserID(userID uint) (*models.Account, error) {
@@ -67,12 +69,12 @@ func (r *TransferRepo) UpdateAccount(account *models.Account, tx *gorm.DB) error
 }
 
 
-//We create transfer record by creating a transfer record in the database
-func (r *TransferRepo) CreateTransfer(senderAcc, recipientAcc uint, amount float64, description string, tx *gorm.DB) error {
-	transfer := models.Transaction{ //create a new transfer record
+//We create transfer in the database
+func (r *TransferRepo) CreateTransfer(senderAcc, recipientAcc uint, amount float64, description, txType string, tx *gorm.DB) error {
+	transfer := models.Transaction{//create a new transfer record
 		UserID:      senderAcc,
 		RecipientID: recipientAcc,
-		Type:        "",
+		Type:        txType, //updated
 		Amount:      amount,
 		Description: description,
 	}
@@ -92,8 +94,9 @@ func (r *TransferRepo) CreateAccount(account *models.Account) error {
 //the context is passed to the function so it can be used within the transaction
 //function takes other function as parameter this way, it can be reused for different operations with the database
 func (r *TransferRepo) WithTransaction(fn func(txRepo *TransferRepo, tx *gorm.DB) error) error {
-	return db.Db.Transaction(func(tx *gorm.DB) error { //if inner function return error, it will roll back
-		txRepo := &TransferRepo{}
+	return db.Db.Transaction(func(tx *gorm.DB) error {
+		// Create a new repo bound to THIS transaction
+		txRepo := &TransferRepo{DB : tx}
 		return fn(txRepo, tx)
 	})
 }

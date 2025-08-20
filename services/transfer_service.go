@@ -3,9 +3,9 @@ package services
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"vaqua/models"
 	"vaqua/repository"
-	"gorm.io/gorm"
 )
 
 type TransferService interface {
@@ -14,7 +14,9 @@ type TransferService interface {
 
 type TransferServices struct {
 	Repo repository.TransferRepo
-} //connection to transfer repo
+}
+
+//connection to transfer repo
 
 /*
 function should:
@@ -63,31 +65,34 @@ func (s *TransferServices) TransferFunds(senderUserID uint, request *models.Tran
 	return nil
 }
 
-
 //atomic transfer transaction
 // actual transfer logic is handled here via a transaction repo method
 // here both the sender and recipient account updates are atomic compared to normal service one which would update the sender account and then the recipient account
 //here if one fails, it rolls back the changes made to both accounts
 
 func (s *TransferServices) executeTransferTransaction(senderAcc, recipientAcc *models.Account, request *models.TransferRequest) error {
-	return s.Repo.WithTransaction(func(txRepo *repository.TransferRepo, tx *gorm.DB) error {  //with transaction method in repo layer
+	return s.Repo.WithTransaction(func(txRepo *repository.TransferRepo, tx *gorm.DB) error { //with transaction method in repo layer
+
+		//update balances
 		senderAcc.Balance -= request.Amount
 		recipientAcc.Balance += request.Amount
 
 		if err := txRepo.UpdateAccount(senderAcc, tx); err != nil {
 			return errors.New("failed to update sender account balance")
 		}
-
 		if err := txRepo.UpdateAccount(recipientAcc, tx); err != nil {
 			return errors.New("failed to update recipient account balance")
 		}
 
-
-		// Create transfer transaction record
-		if err := txRepo.CreateTransfer(senderAcc.ID, recipientAcc.ID, request.Amount, request.Description, tx); err != nil {
-			return fmt.Errorf("failed to create transfer transaction: %w", err)
+		if err := txRepo.CreateTransfer(senderAcc.UserID, recipientAcc.UserID, request.Amount, request.Description, "expense", tx); err != nil {
+			return fmt.Errorf("failed to create sender transaction: %w", err)
 		}
-
+		
+		if err := txRepo.CreateTransfer(recipientAcc.UserID, senderAcc.UserID, request.Amount, request.Description, "income", tx); err != nil {
+			return fmt.Errorf("failed to create recipient transaction: %w", err)
+		}
 		return nil
 	})
 }
+
+//helper to create transaction
