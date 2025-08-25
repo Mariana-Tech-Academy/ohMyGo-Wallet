@@ -1,9 +1,12 @@
 package routes
 
 import (
+	"net/http"
+	"time"
 	"vaqua/handler"
 	"vaqua/middleware"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -15,6 +18,14 @@ func SetupRouter(
 	db *gorm.DB,
 ) *gin.Engine {
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type", "Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -74,6 +85,9 @@ func SetupRouter(
 		dashboardRoutes.POST("/transfer", transferRequestHandler.CreateTransfer)
 		
 	}
-  
+
+	
 	return r
+
 }
+
